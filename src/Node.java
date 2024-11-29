@@ -3,6 +3,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -372,6 +373,13 @@ public class Node {
     }
 
     public void addRandomDataitem(){
+        try{
+            TimeUnit.SECONDS.sleep(1);
+        }
+        catch(InterruptedException e){
+            return;
+        }
+        System.out.println("robot added dataitem");
         Random r = new Random();
         int randomNum = r.nextInt(3);
         if(randomNum == 0 && getAccountNames().size() > 0){

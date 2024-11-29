@@ -13,7 +13,7 @@ public class KeyboardListener extends Thread {
     }
 
     public void run() {
-        System.out.println("Commands: add, remove, transaction, connect, integrity, balances, nodes, dataitems");
+        System.out.println("Commands: add, remove, transaction, connect, integrity, balances, nodes, dataitems, robot");
         Scanner sc = new Scanner(System.in);
         while (true) {
             try {
@@ -134,7 +134,7 @@ public class KeyboardListener extends Thread {
             if (cmd.length != 1)
                 System.out.println("Usage: robot");
             else {
-                while(func()){
+                while(checkForKeyPress()){
                     node.addRandomDataitem();
                 }
             }
@@ -142,7 +142,7 @@ public class KeyboardListener extends Thread {
             System.out.println("Unknown Command");
         }
     }
-    private boolean func(){
+    private boolean checkForKeyPress(){
         try {
             return (System.in.available()==0);
         } catch (Exception e) {

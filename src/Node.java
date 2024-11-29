@@ -374,21 +374,21 @@ public class Node {
 
     public void addRandomDataitem(){
         try{
-            TimeUnit.SECONDS.sleep(1);
+            TimeUnit.SECONDS.sleep((long)0.1);
         }
         catch(InterruptedException e){
             return;
         }
-        System.out.println("robot added dataitem");
         Random r = new Random();
-        int randomNum = r.nextInt(3);
+        int randomNum = r.nextInt(10);
         if(randomNum == 0 && getAccountNames().size() > 0){
             ArrayList<String> names = getAccountNames();
             String randomAccountName = names.get(r.nextInt(names.size()));
             removeAccountFromNetwork(randomAccountName);
         }
-        else if (randomNum == 1 && getAccountNames().size() > 0){
+        else if (randomNum > 1 && randomNum < 7 && getAccountNames().size() > 0){
             ArrayList<String> names = getAccountNames();
+            names.add("EXTERNAL");
             String randomPayer = names.get(r.nextInt(names.size()));
             String randomPayee = names.get(r.nextInt(names.size()));
             addTransactionToNetwork(randomPayer, randomPayee, r.nextInt(999999999)+1);

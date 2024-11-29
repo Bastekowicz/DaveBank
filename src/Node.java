@@ -1,5 +1,6 @@
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.UUID;
 import java.io.ByteArrayInputStream;
@@ -368,6 +369,26 @@ public class Node {
             id_list.add(data_item.id);
         }
         return id_list.hashCode();
+    }
+
+    public void addRandomDataitem(){
+        Random r = new Random();
+        int randomNum = r.nextInt(3);
+        if(randomNum == 0 && getAccountNames().size() > 0){
+            ArrayList<String> names = getAccountNames();
+            String randomAccountName = names.get(r.nextInt(names.size()));
+            removeAccountFromNetwork(randomAccountName);
+        }
+        else if (randomNum == 1 && getAccountNames().size() > 0){
+            ArrayList<String> names = getAccountNames();
+            String randomPayer = names.get(r.nextInt(names.size()));
+            String randomPayee = names.get(r.nextInt(names.size()));
+            addTransactionToNetwork(randomPayer, randomPayee, r.nextInt(999999999)+1);
+        }
+        else {
+            char c = (char)(r.nextInt(26) + 'a');
+            addAccountToNetwork(Character.toString(c));
+        }
     }
 
     public Node(String name, int listening_port){

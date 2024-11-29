@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.NoSuchElementException;
@@ -129,8 +130,23 @@ public class KeyboardListener extends Thread {
             else {
                 System.out.println("Dataitems Hash: "+ node.getDataItemsHashCode());
             }
+        }else if (cmd[0].equalsIgnoreCase("robot")) {
+            if (cmd.length != 1)
+                System.out.println("Usage: robot");
+            else {
+                while(func()){
+                    node.addRandomDataitem();
+                }
+            }
         }else {
             System.out.println("Unknown Command");
+        }
+    }
+    private boolean func(){
+        try {
+            return (System.in.available()==0);
+        } catch (Exception e) {
+            return true;
         }
     }
 }

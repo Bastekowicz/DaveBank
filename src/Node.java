@@ -237,7 +237,7 @@ public class Node {
                     break;
                 case DATAITEM:
                     //System.out.println("Dataitem received:");
-                    System.out.println(message.data_item.toString());
+                    //System.out.println(message.data_item.toString());
                     time = Integer.max(message.data_item.time,time) + 1;
                     data_items.add(message.data_item);
                     break;

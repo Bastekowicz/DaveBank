@@ -2,29 +2,28 @@ import java.io.Serializable;
 import java.util.UUID;
 
 public class DataItem implements Serializable,Comparable<DataItem> {
-    public UUID id;
+    public UUID id = UUID.randomUUID();
     public DataType type;
-    public String data_s1;
-    public String data_s2;
-    public int data_i;
+    public Account account1;
+    public Account account2;
+    public int amount;
     public int time;
 
     //Constructor for transaction
-    public DataItem(DataType type, String data_s1, String data_s2, int data_i, int time){
-        this.id = UUID.randomUUID();
+    public DataItem(DataType type, Account account1, Account account2, int amount, int time){
         this.type = type;
-        this.data_s1 = data_s1;
-        this.data_s2 = data_s2;
-        this.data_i = data_i;
+        this.account1 = account1;
+        this.account2 = account2;
+        this.amount = amount;
         this.time = time;
     }
     //Constructor for add/remove account
-    public DataItem(DataType type, String data_s1, int time){
-        this.id = UUID.randomUUID();
+    public DataItem(DataType type, Account account1, int time){
         this.type = type;
-        this.data_s1 = data_s1;
+        this.account1 = account1;
         this.time = time;
     }
+
     @Override
     public int compareTo(DataItem data_item2) {
         if (this.time > data_item2.time){
@@ -43,11 +42,11 @@ public class DataItem implements Serializable,Comparable<DataItem> {
         String str;
         if (type == DataType.TRANSACTION){
             str = "Id:%s, Type:%s, Payer:%s, Payee:%s, Amount:%d, Time:%d";
-            str = String.format(str, id.toString(), type.name(), data_s1, data_s2, data_i, time);
+            str = String.format(str, id.toString(), type.name(), account1.id.toString(), account2.id.toString(), amount, time);
         }  
         else {
             str = "Id:%s, Type:%s, Account:%s, Time:%d";
-            str = String.format(str, id.toString(), type.name(), data_s1, time);
+            str = String.format(str, id.toString(), type.name(), account1.id.toString(), time);
         }
         return str;
     }

@@ -2,8 +2,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,6 +28,7 @@ public class Node {
     private KeyboardListener keyboard_listener = new KeyboardListener(this);
     private NetworkListener network_listener;
     private HashMap<RemoteNode, Integer> integrity_hashes = new HashMap<RemoteNode, Integer>();
+    private boolean waiting = false;
     public static void main(String[] args){
         System.out.println("Enter:[node name] [port]");
         Scanner sc = new Scanner(System.in);
@@ -53,21 +56,21 @@ public class Node {
         return remote_nodes;
     }
 
-    public ArrayList<String> getAccountNames() {
-        ArrayList<String> account_names = new ArrayList<String>();
-        account_names.addAll(getAccountsBalances().keySet());
-        return account_names;
+    public Set<Account> getAccounts() {
+        Set<Account> accounts = getAccountsBalances().keySet();
+        return accounts;
     }
 
-    public HashMap<String, Integer> getAccountsBalances() {
+    public HashMap<Account, Integer> getAccountsBalances() {
         sortDataItems();
-        HashMap<String, Integer> account_balance = new HashMap<String, Integer>();
-        account_balance.put("EXTERNAL",Integer.MAX_VALUE); //pseudo-account from which an account can receive funds
+        HashMap<Account, Integer> account_balance = new HashMap<Account, Integer>();
+        Account EXTERNAL = new Account(UUID.nameUUIDFromBytes("EXTERNAL".getBytes()));
+        account_balance.put(EXTERNAL,Integer.MAX_VALUE); //pseudo-account from which an account can receive funds
 
         for(DataItem data_item : data_items){
-            String payer = data_item.data_s1; //or account to be added/deleted
-            String payee = data_item.data_s2;
-            int amount = data_item.data_i;
+            Account payer = data_item.account1; //or account to be added/deleted
+            Account payee = data_item.account2;
+            int amount = data_item.amount;
 
             if (data_item.type == DataType.REMOVE_ACCOUNT){
                 account_balance.remove(payer);
@@ -89,14 +92,14 @@ public class Node {
             if (account_balance.get(payer) < amount){
                 continue;
             }
-            if (payer != "EXTERNAL"){
+            if (payer != EXTERNAL){
                 account_balance.put(payer, account_balance.get(payer) - amount);
             }
-            if (payee != "EXTERNAL"){
+            if (payee != EXTERNAL){
                 account_balance.put(payee, account_balance.get(payee) + amount);
             }
         }
-        account_balance.remove("EXTERNAL");
+        account_balance.remove(EXTERNAL);
         return account_balance;
     }
 
@@ -104,40 +107,56 @@ public class Node {
         Collections.sort(data_items);
     }
 
-    public void addAccountToNetwork(String account_name){
-        if(account_name.equals("EXTERNAL")){
-            System.out.println("Account name cannot be EXTERNAL");
-            return;
-        }
+    public void addAccountToNetwork(String account_name, AccountType account_type){
         time += 1;
-        DataItem data_item = new DataItem(DataType.ADD_ACCOUNT, account_name, time);
+        Account account = new Account(account_name, account_type);
+        DataItem data_item = new DataItem(DataType.ADD_ACCOUNT,account,time);
         data_items.add(data_item);
         Message message = new Message(MessageType.DATAITEM, self_remote_node, data_item);
         sendMessageToNetwork(message);
         time += 1;
     }
 
-    public void removeAccountFromNetwork(String account_name){
-        if(account_name.equals("EXTERNAL")){
-            System.out.println("Account name cannot be EXTERNAL");
+    public void removeAccountFromNetwork(String id){         
+        if(id.equals("EXTERNAL")){
+            System.out.println("Account id cannot be EXTERNAL");
             return;
-        }
-            
+        }   
         time += 1;
-        DataItem data_item = new DataItem(DataType.REMOVE_ACCOUNT, account_name, time);
+        Account account = new Account(UUID.fromString(id));
+        DataItem data_item = new DataItem(DataType.REMOVE_ACCOUNT, account, time);
         data_items.add(data_item);
         Message message = new Message(MessageType.DATAITEM, self_remote_node, data_item);
         sendMessageToNetwork(message);
         time += 1;
     }
 
-    public void addTransactionToNetwork(String payer, String payee, int amount){
+    public void addTransactionToNetwork(String payer_id, String payee_id, int amount){
+        Account payer;
+        Account payee;
+        try{
+            if (payer_id.equals("EXTERNAL")){
+                payer = new Account(UUID.nameUUIDFromBytes(payer_id.getBytes()));
+            }
+            else {
+                payer = new Account(UUID.fromString(payer_id));
+            }
+            if (payee_id.equals("EXTERNAL")){
+                payee = new Account(UUID.nameUUIDFromBytes(payee_id.getBytes()));
+            }
+            else {
+                payee = new Account(UUID.fromString(payee_id));
+            }
+        }
+        catch(Exception e){
+            System.out.println("Invalid data");
+            return;
+        }
         time += 1;
         DataItem data_item = new DataItem(DataType.TRANSACTION, payer, payee, amount, time);
         data_items.add(data_item);
         Message message = new Message(MessageType.DATAITEM, self_remote_node, data_item);
         sendMessageToNetwork(message);
-        time += 1;
     }
 
     public void connectToNetwork(InetAddress ip, int port){
@@ -160,15 +179,7 @@ public class Node {
         }
         Message message2 = new Message(MessageType.DISCONNECT, self_remote_node);
         sendMessageToNetwork(message2);
-    }
-
-    public void checkNetworkIntegrity(){
-        if (remote_nodes.size() == 0){
-            System.out.println("Not connected to a network");
-            return;
-        }
-        Message message = new Message(MessageType.DATAITEMS_HASH_REQUEST, self_remote_node);
-        sendMessageToNetwork(message);
+        remote_nodes.clear();
     }
 
     public void sendMessageToNetwork(Message message){
@@ -253,6 +264,7 @@ public class Node {
                 case REMOVE_NODE:
                     System.out.println("Remove node received");
                     remote_nodes.remove(message.other_node);
+                    break;
                 case DISCOVER:
                     System.out.println("Discover request");
                     break;
@@ -267,13 +279,20 @@ public class Node {
                     System.out.println("Hash received");
                     integrity_hashes.put(message.sending_node, message.hash);
                     if (integrity_hashes.size() == remote_nodes.size()){
+                        waiting = false;
                         System.out.println("All hashes received, starting check");
                         integrityCheckFinalize();
                     }
                     break;
                 case CHECK_INTEGRITY:
                     System.out.println("Check integrity received");
-                    checkNetworkIntegrity();
+                    Thread waitThread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            checkNetworkIntegrity();
+                        }
+                    });  
+                    waitThread.start();
                     break;
             }
         }
@@ -282,9 +301,33 @@ public class Node {
         }
     }
 
-    public void clearDataitems(){
-        time = 0;
-        data_items.clear();
+    public void checkNetworkIntegrity(){
+        if (remote_nodes.size() == 0){
+            System.out.println("Not connected to a network");
+            return;
+        }
+        Message message = new Message(MessageType.DATAITEMS_HASH_REQUEST, self_remote_node);
+        sendMessageToNetwork(message);
+        System.out.println("Waiting for response.");
+        this.waiting = true;
+        try{
+            TimeUnit.SECONDS.sleep((long)1);
+        }
+        catch(InterruptedException e){
+            return;
+        }
+        if (this.waiting == true){
+            ArrayList<RemoteNode> nodes_received = new ArrayList<RemoteNode>(integrity_hashes.keySet());
+            List<RemoteNode>  non_responsive_nodes = new ArrayList<RemoteNode>(remote_nodes);
+            non_responsive_nodes.removeAll(nodes_received);
+            System.out.println("Nodes not responding:");
+            System.out.println(non_responsive_nodes.toString());
+            remote_nodes.removeAll(non_responsive_nodes);
+            for (RemoteNode non_responsive_node : non_responsive_nodes){
+                Message message2 = new Message(MessageType.REMOVE_NODE, this.self_remote_node, non_responsive_node);
+                sendMessageToNetwork(message2);
+            }
+        }
     }
 
     public void integrityCheckFinalize(){
@@ -338,6 +381,12 @@ public class Node {
             Message message = new Message(MessageType.CHECK_INTEGRITY, self_remote_node);
             sendMessageToNode(message, good_node.ip, good_node.port);
         }
+        integrity_hashes.clear();
+    }
+
+    public void clearDataitems(){
+        time = 0;
+        data_items.clear();
     }
 
     public void handleConnect(RemoteNode node_to_add){
@@ -381,21 +430,22 @@ public class Node {
         }
         Random r = new Random();
         int randomNum = r.nextInt(10);
-        if(randomNum == 0 && getAccountNames().size() > 0){
-            ArrayList<String> names = getAccountNames();
-            String randomAccountName = names.get(r.nextInt(names.size()));
-            removeAccountFromNetwork(randomAccountName);
+        if(randomNum > 8 && getAccounts().size() > 0){
+            ArrayList<Account> accounts = new ArrayList<Account>(getAccounts());
+            String randomAccountId = accounts.get(r.nextInt(accounts.size())).id.toString();
+            removeAccountFromNetwork(randomAccountId);
         }
-        else if (randomNum > 1 && randomNum < 7 && getAccountNames().size() > 0){
-            ArrayList<String> names = getAccountNames();
-            names.add("EXTERNAL");
-            String randomPayer = names.get(r.nextInt(names.size()));
-            String randomPayee = names.get(r.nextInt(names.size()));
-            addTransactionToNetwork(randomPayer, randomPayee, r.nextInt(999999999)+1);
+        else if (randomNum > 3 && getAccounts().size() > 0){
+            ArrayList<Account> accounts = new ArrayList<Account>(getAccounts());
+            List<String> id_list = accounts.stream().map((account) -> account.id.toString()).collect(Collectors.toList());
+            id_list.add("EXTERNAL");
+            String randomPayerId = id_list.get(r.nextInt(id_list.size()));
+            String randomPayeeId = id_list.get(r.nextInt(id_list.size()));
+            addTransactionToNetwork(randomPayerId, randomPayeeId, r.nextInt(9999)+1);
         }
-        else {
+        else if (getAccounts().size() < 20){
             char c = (char)(r.nextInt(26) + 'a');
-            addAccountToNetwork(Character.toString(c));
+            addAccountToNetwork(Character.toString(c),AccountType.values()[r.nextInt(3)]);
         }
     }
 

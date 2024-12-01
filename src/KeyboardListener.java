@@ -1,6 +1,6 @@
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
@@ -13,7 +13,7 @@ public class KeyboardListener extends Thread {
     }
 
     public void run() {
-        System.out.println("Commands: add, remove, transaction, connect, integrity, balances, nodes, dataitems, robot");
+        System.out.println("Commands: add, remove, transaction, connect, disconnect, integrity, balances, nodes, dataitems, robot");
         Scanner sc = new Scanner(System.in);
         while (true) {
             try {
@@ -29,21 +29,28 @@ public class KeyboardListener extends Thread {
     public void parseLine(String line) {
         String[] cmd = line.split(" ");
         if (cmd[0].equalsIgnoreCase("add")) {
-            if (cmd.length != 2)
-                System.out.println("Usage: add accountname");
+            if (cmd.length != 3)
+                System.out.println("Usage: add accountname [0,1,2 for regular/student/savings]");
             else {
-                node.addAccountToNetwork(cmd[1]);
+                try {
+                    AccountType account_type = AccountType.values()[Integer.parseInt(cmd[2])];
+                    node.addAccountToNetwork(cmd[1],account_type);
+                }
+                catch(Exception e){
+                    System.out.println("Wrong format");
+                }
+                
             }
         } else if(cmd[0].equalsIgnoreCase("remove")){
             if (cmd.length != 2)
-                System.out.println("Usage: remove accountname");
+                System.out.println("Usage: remove [account id]");
             else {
                 node.removeAccountFromNetwork(cmd[1]);
             }
         }
         else if(cmd[0].equalsIgnoreCase("transaction")){
             if (cmd.length != 4)
-                System.out.println("Usage: transaction [payer account name] [payee account name] [amount]");
+                System.out.println("Usage: transaction [payer account id] [payee account id] [amount]");
             else {
                 try {
                     int amount = Integer.parseInt(cmd[3]);
@@ -92,7 +99,9 @@ public class KeyboardListener extends Thread {
             if (cmd.length != 1)
                 System.out.println("Usage: balances");
             else {
-               System.out.println(node.getAccountsBalances().toString());
+                for (Map.Entry<Account, Integer> entry : node.getAccountsBalances().entrySet()) {
+                    System.out.println(String.format("%s balance:%s",entry.getKey().toString(), entry.getValue()));
+                }
             }
         }else if (cmd[0].equalsIgnoreCase("nodes")) {
             if (cmd.length != 1)
@@ -112,6 +121,7 @@ public class KeyboardListener extends Thread {
             else if (cmd.length == 2){
                 try {
                     int index = Integer.parseInt(cmd[1]);
+                    System.out.println(String.format("Dataitem %d/%d",index+1,node.data_items.size()));
                     System.out.println(node.data_items.get(index));
                 }catch(IndexOutOfBoundsException | NumberFormatException e){
                     System.out.println("Wrong format or index out of bounds");

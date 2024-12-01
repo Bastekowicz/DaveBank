@@ -2,7 +2,7 @@ import java.io.Serializable;
 
 public class Message implements Serializable{
     public MessageType type;
-    public RemoteNode sending_node = new RemoteNode();
+    public RemoteNode sending_node;
     public RemoteNode other_node;
     public DataItem data_item;
     public int hash;

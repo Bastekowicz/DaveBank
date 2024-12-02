@@ -28,6 +28,7 @@ public class Node {
     public List<RemoteNode> remote_nodes = new ArrayList<RemoteNode>();
     private KeyboardListener keyboard_listener = new KeyboardListener(this);
     private NetworkListener network_listener;
+    private DiscoveryListener discovery_listener;
     private HashMap<RemoteNode, Integer> integrity_hashes = new HashMap<RemoteNode, Integer>();
     private boolean waiting = false;
     public static void main(String[] args){
@@ -233,6 +234,30 @@ public class Node {
         }
     }
 
+    public void discover(){
+        ByteArrayOutputStream bStream = new ByteArrayOutputStream();
+        Message message = new Message(MessageType.DISCOVER, self_remote_node);
+        try{
+            ObjectOutput oo = new ObjectOutputStream(bStream);
+            oo.writeObject(message);
+            oo.close();
+        }
+        catch (Exception e){e.printStackTrace();}
+        byte[] serializedMessage = bStream.toByteArray();
+        try
+            {
+                DatagramSocket ds = new DatagramSocket();
+                InetAddress group = InetAddress.getByName("224.0.0.0");
+                DatagramPacket packet = new DatagramPacket(serializedMessage, serializedMessage.length, group, 4999);
+                ds.send(packet);
+                ds.close();
+            }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     public void receive(byte[] recBytes,InetAddress ip){
         try{
             ObjectInputStream iStream = new ObjectInputStream(new ByteArrayInputStream(recBytes));
@@ -268,7 +293,16 @@ public class Node {
                     remote_nodes.remove(message.other_node);
                     break;
                 case DISCOVER:
-                    System.out.println("Discover request");
+                    System.out.println(message.sending_node.ip.toString());
+                    System.out.println("hello");
+                    if (message.sending_node.ip == null){
+                        System.out.println("Discover request");
+                        Message message2 = new Message(MessageType.DISCOVER_RESPOND, self_remote_node);
+                        sendMessageToNode(message2, message.sending_node.ip, message.sending_node.port);
+                    }
+                    break;
+                case DISCOVER_RESPOND:
+                    System.out.println(String.format("Response from: %s",message.sending_node.toString()));
                     break;
                 case DATAITEMS_HASH_REQUEST:
                     System.out.println("Hash request");
@@ -456,7 +490,9 @@ public class Node {
         this.self_remote_node.name = name;
         this.self_remote_node.port = listening_port;
         this.network_listener = new NetworkListener(this,listening_port);
+        this.discovery_listener = new DiscoveryListener(this);
         this.network_listener.start();
+        this.discovery_listener.start();
         this.keyboard_listener.start();
     }
 }

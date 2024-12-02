@@ -14,7 +14,7 @@ public class KeyboardListener extends Thread {
     }
 
     public void run() {
-        System.out.println("Commands: add, remove, transaction, connect, disconnect, integrity, balances, nodes, dataitems, robot");
+        System.out.println("Commands: add, remove, transaction, connect, disconnect, integrity, balances, nodes, dataitems, robot, discover");
         Scanner sc = new Scanner(System.in);
         while (true) {
             try {
@@ -155,6 +155,12 @@ public class KeyboardListener extends Thread {
                 }
                     node.addRandomDataitem();
                 }
+            }
+        }else if (cmd[0].equalsIgnoreCase("discover")) {
+            if (cmd.length != 1)
+                System.out.println("Usage: discover");
+            else {
+                node.discover();
             }
         }else {
             System.out.println("Unknown Command");

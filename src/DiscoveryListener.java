@@ -20,7 +20,7 @@ public class DiscoveryListener extends Thread {
             {
                 MulticastSocket ms = new MulticastSocket(4999);
                 InetAddress ip = InetAddress.getByName("224.0.0.42");
-                ms.joinGroup(ip);          
+                ms.joinGroup(new InetSocketAddress(ip,4999),null);          
                 System.out.println(NetworkInterface.getNetworkInterfaces().toString());
 
                 DatagramPacket packet;

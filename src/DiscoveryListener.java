@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.net.SocketAddress;
+import java.util.Enumeration;
 
 public class DiscoveryListener extends Thread {
     public Node node;
@@ -17,15 +18,18 @@ public class DiscoveryListener extends Thread {
         System.out.println("Starting discovery listening on port 4999");
             try
             {
-                MulticastSocket socket = new MulticastSocket(4999);
-                InetAddress group_ip = InetAddress.getByName("230.0.0.1");
-                socket.joinGroup(group_ip);
+                MulticastSocket ms = new MulticastSocket();
+                InetSocketAddress group_ip = new InetSocketAddress(InetAddress.getByName("230.1.2.3"),4999);
+                NetworkInterface nif = NetworkInterface.getByIndex(1);
+                ms.joinGroup(group_ip, nif);                
+                System.out.println(NetworkInterface.getNetworkInterfaces().toString());
+
                 DatagramPacket packet;
                 while(true)
                 {
                     byte[] byte_message = new byte[65535];
                     packet = new DatagramPacket(byte_message, byte_message.length);
-                    socket.receive(packet);
+                    ms.receive(packet);
                     InetAddress remote_ip = packet.getAddress();
                     node.receive(byte_message,remote_ip);
                 }

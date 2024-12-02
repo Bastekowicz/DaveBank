@@ -16,9 +16,13 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
+import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Objects;
 
 
 public class Node {
@@ -28,7 +32,6 @@ public class Node {
     public List<RemoteNode> remote_nodes = new ArrayList<RemoteNode>();
     private KeyboardListener keyboard_listener = new KeyboardListener(this);
     private NetworkListener network_listener;
-    private DiscoveryListener discovery_listener;
     private HashMap<RemoteNode, Integer> integrity_hashes = new HashMap<RemoteNode, Integer>();
     private boolean waiting = false;
     public static void main(String[] args){
@@ -235,27 +238,22 @@ public class Node {
     }
 
     public void discover(){
+        //generate byte message
         ByteArrayOutputStream bStream = new ByteArrayOutputStream();
         Message message = new Message(MessageType.DISCOVER, self_remote_node);
         try{
             ObjectOutput oo = new ObjectOutputStream(bStream);
             oo.writeObject(message);
             oo.close();
+        
+        byte[] serializedMessage = bStream.toByteArray();
+            DatagramSocket socket = new DatagramSocket();
+            socket.setBroadcast(true);
+            DatagramPacket packet = new DatagramPacket(serializedMessage, serializedMessage.length, InetAddress.getByName("255.255.255.255"), 5042);
+            socket.send(packet);
+            socket.close();
         }
         catch (Exception e){e.printStackTrace();}
-        byte[] serializedMessage = bStream.toByteArray();
-        try
-            {
-                DatagramSocket ds = new DatagramSocket();
-                InetAddress group = InetAddress.getByName("230.0.0.0");
-                DatagramPacket packet = new DatagramPacket(serializedMessage, serializedMessage.length, group, 4999);
-                ds.send(packet);
-                ds.close();
-            }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-        }
     }
 
     public void receive(byte[] recBytes,InetAddress ip){
@@ -488,9 +486,7 @@ public class Node {
         this.self_remote_node.name = name;
         this.self_remote_node.port = listening_port;
         this.network_listener = new NetworkListener(this,listening_port);
-        this.discovery_listener = new DiscoveryListener(this);
         this.network_listener.start();
-        this.discovery_listener.start();
         this.keyboard_listener.start();
     }
 }

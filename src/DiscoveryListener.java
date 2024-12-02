@@ -25,6 +25,7 @@ public class DiscoveryListener extends Thread {
                     packet = new DatagramPacket(byte_message, byte_message.length);
                     socket.receive(packet);
                     InetAddress remote_ip = packet.getAddress();
+                    node.receive(byte_message,remote_ip);
                 }
             }
             catch(Exception e)

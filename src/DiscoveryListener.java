@@ -3,6 +3,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
+import java.net.NetworkInterface;
 import java.net.SocketAddress;
 
 public class DiscoveryListener extends Thread {
@@ -17,9 +18,8 @@ public class DiscoveryListener extends Thread {
             try
             {
                 MulticastSocket socket = new MulticastSocket(4999);
-                InetAddress group_ip = InetAddress.getByName("224.0.0.0");
-                InetSocketAddress group = new InetSocketAddress(group_ip, 4999);
-                socket.joinGroup(group, null);
+                InetAddress group_ip = InetAddress.getByName("230.0.0.1");
+                socket.joinGroup(group_ip);
                 DatagramPacket packet;
                 while(true)
                 {

@@ -293,7 +293,7 @@ public class Node {
                     remote_nodes.remove(message.other_node);
                     break;
                 case DISCOVER:
-                    if (message.sending_node.ip != null){
+                    if (message.sending_node != self_remote_node){
                         System.out.println("Discover request");
                         Message message2 = new Message(MessageType.DISCOVER_RESPOND, self_remote_node);
                         sendMessageToNode(message2, message.sending_node.ip, message.sending_node.port);

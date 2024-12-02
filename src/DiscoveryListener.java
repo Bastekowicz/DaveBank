@@ -19,7 +19,7 @@ public class DiscoveryListener extends Thread {
             try
             {
                 MulticastSocket ms = new MulticastSocket(4999);
-                InetAddress ip = InetAddress.getByName("230.0.0.1");
+                InetAddress ip = InetAddress.getByName("239.1.2.3");
                 ms.joinGroup(ip);          
                 System.out.println(NetworkInterface.getNetworkInterfaces().toString());
 

@@ -247,7 +247,7 @@ public class Node {
         try
             {
                 DatagramSocket ds = new DatagramSocket();
-                InetAddress group = InetAddress.getByName("230.0.0.1");
+                InetAddress group = InetAddress.getByName("239.1.2.3");
                 DatagramPacket packet = new DatagramPacket(serializedMessage, serializedMessage.length, group, 4999);
                 ds.send(packet);
                 ds.close();

@@ -18,10 +18,9 @@ public class DiscoveryListener extends Thread {
         System.out.println("Starting discovery listening on port 4999");
             try
             {
-                MulticastSocket ms = new MulticastSocket();
-                InetSocketAddress group_ip = new InetSocketAddress(InetAddress.getByName("230.1.2.3"),4999);
-                NetworkInterface nif = NetworkInterface.getByIndex(1);
-                ms.joinGroup(group_ip, nif);                
+                MulticastSocket ms = new MulticastSocket(4999);
+                InetAddress ip = InetAddress.getByName("230.0.0.1");
+                ms.joinGroup(ip);          
                 System.out.println(NetworkInterface.getNetworkInterfaces().toString());
 
                 DatagramPacket packet;

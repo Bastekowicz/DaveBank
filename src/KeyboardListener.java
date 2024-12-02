@@ -3,6 +3,7 @@ import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class KeyboardListener extends Thread {
 
@@ -145,6 +146,13 @@ public class KeyboardListener extends Thread {
                 System.out.println("Usage: robot");
             else {
                 while(checkForKeyPress()){
+                try{
+                    TimeUnit.MILLISECONDS.sleep((long)100);
+                    System.out.println("adding random dataitems");
+                }
+                catch(InterruptedException e){
+                    return;
+                }
                     node.addRandomDataitem();
                 }
             }

@@ -4,6 +4,7 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.io.ByteArrayInputStream;
@@ -23,7 +24,7 @@ import java.util.Collections;
 public class Node {
     public int time = 0;
     public RemoteNode self_remote_node;
-    public List<DataItem> data_items = new ArrayList<DataItem>();
+    public List<DataItem> data_items = new CopyOnWriteArrayList<DataItem>();
     public List<RemoteNode> remote_nodes = new ArrayList<RemoteNode>();
     private KeyboardListener keyboard_listener = new KeyboardListener(this);
     private NetworkListener network_listener;
@@ -180,6 +181,7 @@ public class Node {
         Message message2 = new Message(MessageType.DISCONNECT, self_remote_node);
         sendMessageToNetwork(message2);
         remote_nodes.clear();
+        System.out.println("Disconnected");
     }
 
     public void sendMessageToNetwork(Message message){
@@ -311,11 +313,12 @@ public class Node {
         System.out.println("Waiting for response.");
         this.waiting = true;
         try{
-            TimeUnit.SECONDS.sleep((long)1);
+            TimeUnit.SECONDS.sleep((long)3);
         }
         catch(InterruptedException e){
             return;
         }
+        //Some nodes not responding, remove them from the network
         if (this.waiting == true){
             ArrayList<RemoteNode> nodes_received = new ArrayList<RemoteNode>(integrity_hashes.keySet());
             List<RemoteNode>  non_responsive_nodes = new ArrayList<RemoteNode>(remote_nodes);
@@ -368,6 +371,11 @@ public class Node {
                     bad_nodes += 1;
                     Message message = new Message(MessageType.CLEAR_DATAITEMS, self_remote_node);
                     sendMessageToNode(message,entry.getKey().ip,entry.getKey().port);
+                    try {
+                        TimeUnit.SECONDS.sleep((long)1);
+                    } catch (Exception e) {
+                    }
+                    
                     for (DataItem data_item : data_items){
                         Message message2 = new Message(MessageType.DATAITEM,self_remote_node,data_item);
                         sendMessageToNode(message2,entry.getKey().ip,entry.getKey().port);
@@ -422,12 +430,6 @@ public class Node {
     }
 
     public void addRandomDataitem(){
-        try{
-            TimeUnit.SECONDS.sleep((long)0.1);
-        }
-        catch(InterruptedException e){
-            return;
-        }
         Random r = new Random();
         int randomNum = r.nextInt(10);
         if(randomNum > 8 && getAccounts().size() > 0){

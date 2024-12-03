@@ -16,14 +16,9 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Objects;
-
 
 public class Node {
     public int time = 0;
@@ -35,6 +30,9 @@ public class Node {
     private HashMap<RemoteNode, Integer> integrity_hashes = new HashMap<RemoteNode, Integer>();
     private boolean waiting = false;
     public static void main(String[] args){
+        try {
+            System.out.println("Local machine ip address:"+InetAddress.getLocalHost().toString());
+        } catch (java.net.UnknownHostException e) {}
         System.out.println("Enter:[node name] [port]");
         Scanner sc = new Scanner(System.in);
         String line = sc.nextLine();
@@ -291,6 +289,11 @@ public class Node {
                     remote_nodes.remove(message.other_node);
                     break;
                 case DISCOVER:
+                    try {
+                        if (InetAddress.getLocalHost().equals(message.sending_node.ip)){
+                            break;
+                        }
+                        } catch (java.net.UnknownHostException e){}
                     if (message.sending_node != self_remote_node){
                         System.out.println("Discover request");
                         Message message2 = new Message(MessageType.DISCOVER_RESPOND, self_remote_node);

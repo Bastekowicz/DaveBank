@@ -247,7 +247,7 @@ public class Node {
         byte[] serializedMessage = bStream.toByteArray();
             DatagramSocket socket = new DatagramSocket();
             socket.setBroadcast(true);
-            DatagramPacket packet = new DatagramPacket(serializedMessage, serializedMessage.length, InetAddress.getByName("255.255.255.255"), 5042);
+            DatagramPacket packet = new DatagramPacket(serializedMessage, serializedMessage.length, InetAddress.getByName("255.255.255.255"), self_remote_node.port);
             socket.send(packet);
             socket.close();
         }

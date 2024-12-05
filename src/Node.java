@@ -399,7 +399,7 @@ public class Node {
             System.out.println("Current node is source of truth");
             int bad_nodes = 0;
             for (Map.Entry<RemoteNode, Integer> entry : integrity_hashes.entrySet()){
-                if (entry.getValue() != mostFreq && entry.getKey() != self_remote_node){
+                if (entry.getKey() != self_remote_node){
                     System.out.println("Correcting node: "+entry.getKey().toString());
                     bad_nodes += 1;
                     Message message = new Message(MessageType.CLEAR_DATAITEMS, self_remote_node);

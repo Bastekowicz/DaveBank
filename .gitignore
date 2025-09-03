@@ -1,0 +1,5 @@
+# Ignore build output
+/bin/
+*.class
+*.jar
+manifest.txt

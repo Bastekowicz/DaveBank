@@ -1,3 +1,4 @@
+package DaveBank;
 public enum MessageType {
     CONNECT,
     DISCONNECT,
